@@ -1,26 +1,16 @@
 <script>
-  import { fassung } from './fassung.svelte.js';
-  import { fassungen, gruppiere, ziel } from './bildungsplan.js';
-  import KProfil from './KProfil.svelte';
-  import { aktiverKurs, kursLoeschen } from './kurse.svelte.js';
-  import { nachweis } from './nachweis.js';
-  import Uebersicht from './Uebersicht.svelte';
-  import Vorschlag from './Vorschlag.svelte';
-  import { verfuegbar } from './vorschlag.svelte.js';
-  import Zielgruppen from './Zielgruppen.svelte';
+  import Freigabe from './Freigabe.svelte';
+  import { konto } from './konto.svelte.js';
+  import KursInhalt from './KursInhalt.svelte';
+  import { aktiverKurs, kursLoeschen, nurLesen } from './kurse.svelte.js';
 
   /** `ongeloescht` führt nach dem Löschen zurück zur Übersicht der Kurse. */
   let { ongeloescht } = $props();
 
   const kurs = $derived(aktiverKurs());
-  const gewaehlt = $derived(kurs.ziele.map(ziel).filter(Boolean));
-  const gruppen = $derived(gruppiere(gewaehlt));
-  const anzahl = $derived(
-    Object.fromEntries(gruppen.map((gruppe) => [gruppe.kompetenz.id, gruppe.ziele.length])),
-  );
-  const text = $derived(nachweis(kurs, fassung.id));
-
-  let meldung = $state('');
+  const gesperrt = $derived(nurLesen(kurs));
+  // Einen fremden Kurs löschen darf nur, wer ihn besitzt; ohne Login gehört jeder Kurs dem Browser.
+  const eigener = $derived(!konto.ich || kurs.istBesitzer !== false);
 
   /** @type {HTMLTextAreaElement} */
   let beschrieb;
@@ -39,11 +29,6 @@
     beschrieb.style.height = `${beschrieb.scrollHeight + beschrieb.offsetHeight - beschrieb.clientHeight}px`;
   });
 
-  async function kopieren() {
-    await navigator.clipboard.writeText(text);
-    meldung = 'Nachweis kopiert.';
-  }
-
   function loeschen() {
     if (!confirm(`Kurs «${kurs.titel}» mit ${kurs.ziele.length} Leistungszielen löschen?`)) return;
     kursLoeschen();
@@ -53,44 +38,35 @@
 
 <svelte:window bind:innerWidth={fensterbreite} />
 
+{#if gesperrt}
+  <p class="hinweis" role="status">
+    {kurs.sperre.email} bearbeitet diesen Kurs gerade. Sobald die Sperre frei ist, lässt er sich wieder ändern.
+  </p>
+{/if}
+
+{#if konto.ich && !eigener}
+  <p class="leise">Kurs von {kurs.besitzer}, für dich zum Mitbearbeiten freigegeben.</p>
+{/if}
+
 <label class="feld">
   <span>Titel</span>
-  <input type="text" bind:value={kurs.titel} />
+  <input type="text" bind:value={kurs.titel} readonly={gesperrt} />
 </label>
 
 <label class="feld">
   <span>Beschrieb</span>
-  <textarea class="beschrieb" rows="4" bind:this={beschrieb} bind:value={kurs.beschrieb}></textarea>
+  <textarea class="beschrieb" rows="4" bind:this={beschrieb} bind:value={kurs.beschrieb} readonly={gesperrt}></textarea>
 </label>
 
-{#if verfuegbar}
-  <Vorschlag {kurs} />
+{#if konto.ich && eigener && kurs.version !== undefined}
+  <Freigabe {kurs} />
 {/if}
 
-{#if gewaehlt.length === 0}
-  <h2>Leistungsziele (0)</h2>
-  <p class="leise">Noch keine Leistungsziele gewählt. Unter «Kompetenzen» lassen sie sich hinzufügen.</p>
-{:else}
-  <h2>Taxonomiestufen</h2>
-  <KProfil ziele={gewaehlt} />
+<KursInhalt {kurs} />
 
-  <h2>Im Bildungsplan</h2>
-  <Uebersicht {anzahl} />
-
-  <h2>Leistungsziele ({gewaehlt.length})</h2>
-  <Zielgruppen {gruppen} />
-
-  <h2>Nachweis</h2>
-  <p class="leise">
-    Version {fassungen.find((eintrag) => eintrag.id === fassung.id).name}, umschaltbar unter «Kompetenzen».
-  </p>
-  <textarea class="nachweis" readonly rows="14" value={text}></textarea>
-  <p><button onclick={kopieren}>Nachweis kopieren</button></p>
+{#if eigener}
+  <p><button class="loeschen" onclick={loeschen} disabled={gesperrt}>Kurs löschen</button></p>
 {/if}
-
-<p class="leise" aria-live="polite">{meldung}</p>
-
-<p><button class="loeschen" onclick={loeschen}>Kurs löschen</button></p>
 
 <style>
   .feld {
@@ -103,9 +79,9 @@
     resize: none;
   }
 
-  h2 {
-    margin: var(--abstand-gross) 0 var(--abstand);
-    font-size: 1.375rem;
+  .hinweis {
+    padding: var(--abstand-klein) var(--abstand);
+    background: var(--treffer);
   }
 
   .loeschen {
@@ -117,11 +93,6 @@
     background: var(--gefahr);
     border-color: var(--gefahr);
     color: var(--gefahr-text);
-  }
-
-  .nachweis {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: var(--schrift-klein);
   }
 
   p {

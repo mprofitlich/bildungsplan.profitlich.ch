@@ -6,7 +6,7 @@ Werkzeug zur Kursplanung: Leistungsziele aus dem Bildungsplan finden, zu Kursen 
 
 ## Grundidee
 
-Dieses Tool hilft dir, die zu deinem Kurs passenden Leistungsziele zusammenzustellen – durch eine filterbare Liste, eine Suche und durch eine Übersicht. Du kannst beliebig viele Kurse anlegen. Sie werden in deinem Browser gespeichert und bleiben, bis du den Browsercache löschst (du kannst sie auch herunterladen unter Meine Kurse). Der Button ‹Hinzufügen› rechts in der Kompetenzenliste fügt ein Ziel zu deinem aktuellen Kurs hinzu. Zwischen den Kursen wechselst Du im Reiter ‹Meine Kurse›, dort kann du auch neue anlegen.
+Dieses Tool hilft dir, die zu deinem Kurs passenden Leistungsziele zusammenzustellen – durch eine filterbare Liste, eine Suche und durch eine Übersicht. Du kannst beliebig viele Kurse anlegen. Ohne Login werden sie in deinem Browser gespeichert und bleiben, bis du den Browsercache löschst (du kannst sie auch herunterladen unter Meine Kurse). Mit einer Schuladresse kannst du dich einloggen; dann liegen die Kurse auf dem Server, lassen sich freigeben und im Curriculum zeigen. Der Button ‹Hinzufügen› rechts in der Kompetenzenliste fügt ein Ziel zu deinem aktuellen Kurs hinzu. Zwischen den Kursen wechselst Du im Reiter ‹Meine Kurse›, dort kann du auch neue anlegen.
 
 ## Kompetenzen
 
@@ -34,20 +34,29 @@ Begriffe aus dem Bildungsplan mit ihrer Erklärung.
 
 ## Meine Kurse
 
-- **Liste**: alle Kurse mit der Zahl ihrer Leistungsziele je Lernort und Taxonomiestufe. Ein Klick öffnet den Kurs.
+- **Liste**: alle Kurse mit der Zahl ihrer Leistungsziele je Lernort und Taxonomiestufe. Ein Klick öffnet den Kurs. Freigegebene Kurse nennen, wem sie gehören.
 - **Neuer Kurs**: legt einen leeren Kurs an und öffnet ihn.
-- **Sicherung**: Die Kurse liegen nur in diesem Browser. «Sicherung herunterladen» speichert alle Kurse in eine Datei, «Sicherung einlesen» ersetzt alle Kurse durch deren Inhalt.
+- **Einloggen**: Adresse eingeben, den Link aus der Mail öffnen und «Einloggen» klicken. Der Link gilt eine Viertelstunde und nur einmal. Beim ersten Login kommen die Kurse dieses Browsers mit. «Abmelden» oben rechts.
+- **Sicherung**: «Sicherung herunterladen» speichert alle Kurse in eine Datei. Ohne Login ersetzt «Sicherung einlesen» alle Kurse durch deren Inhalt, mit Login fügt es die Kurse der Datei hinzu.
 
 ## Kurs
 
 Der Reiter rechts zeigt den aktiven Kurs und die Zahl seiner Leistungsziele.
 
 - **Titel und Beschrieb**: werden laufend gespeichert.
-- **Vorschlag**: nur in der lokalen Fassung. Claude liest Titel und Beschrieb und schlägt Leistungsziele mit Begründung vor.
+- **Freigabe**: nur mit Login und nur bei eigenen Kursen. «Im Curriculum zeigen» macht den Kurs für alle Eingeloggten derselben Schule sichtbar. Darunter lässt er sich an Adressen derselben Schule zum Mitbearbeiten freigeben; bekannte Adressen werden vorgeschlagen, und die Person bekommt eine Mail.
+- **Gleichzeitig bearbeiten**: Wer einen Kurs gerade ändert, hält ihn; alle anderen sehen ihn so lange nur zum Lesen. Die Sperre löst sich, sobald die Person den Kurs wechselt, den Tab verlässt oder fünf Minuten nichts tut.
 - **Taxonomiestufen**: Verteilung der gewählten Ziele auf K1 bis K6.
 - **Im Bildungsplan**: welche Handlungskompetenzen der Kurs wie stark abdeckt.
 - **Nachweis**: die gewählten Ziele als Text zum Kopieren, in der eingestellten Version.
-- **Kurs löschen**: entfernt den Kurs nach einer Rückfrage.
+- **Kurs löschen**: entfernt den Kurs nach einer Rückfrage. Freigegebene Kurse löschen kann nur, wem sie gehören.
+
+## Curriculum
+
+Nur mit Login. Alle Kurse der eigenen Schule mit «Im Curriculum zeigen».
+
+- **Im Bildungsplan**: die Leistungsziele aller Kurse je Handlungskompetenz zusammengezählt; ein Ziel in drei Kursen zählt dreimal.
+- **Kurse**: Ein Klick öffnet den Kurs zum Ansehen, mit Nachweis zum Kopieren.
 
 ## Neue Funktionen
 
@@ -57,14 +66,28 @@ Neue Funktionen meldet ein Fenster beim nächsten Besuch. Nach dem Schliessen er
 
 ## Entwicklung
 
+Laravel liefert die Anwendung und ihre API aus; das Frontend ist Svelte. Alles läuft in ddev, auch npm.
+
 ```sh
-npm install
-npm run dev                      # Entwicklungsserver, Port 5173
-npm run dev -- --port 5180       # mit eigenem Port
-npm test
-npm run build
+ddev start
+ddev composer install
+ddev npm install
+ddev artisan migrate
+ddev npm run dev                 # Vite mit Neuladen; ohne läuft der letzte Build
+ddev launch                      # https://bildungsplan.profitlich.ch.ddev.site
+ddev launch -m                   # Mailpit, dort landen die Login-Links
+ddev exec php artisan test --compact
+ddev npm test
+ddev npm run build
+ddev exec vendor/bin/pint --dirty
 ```
 
-Die Vorschläge laufen nur auf dem Entwicklungsserver; er ruft die Claude-Kommandozeile auf dem Rechner auf. Der Teil zwischen `hilfe:start` und `hilfe:end` erscheint in der Anwendung unter «Hilfe» und unterstützt Überschriften, Absätze, Listen, **fett**, `Code` und Links.
+Wer sich einloggen darf, steht in der Tabelle `domains` (vorerst `sluz.ch`).
 
-Weitere Unterlagen: [Datenbasis](docs/datenbasis.md), [Abweichungen](docs/abweichungen.md).
+Die `.env` schreibt `ddev start` jedes Mal neu aus dem 1Password-Environment des Projekts (pre-start-Hook in `.ddev/config.yaml`, Skript `.ddev/env-from-1password.sh`). Eine Änderung von Hand hält deshalb nur bis zum nächsten Start; sie gehört nach 1Password. Ist 1Password nicht erreichbar, startet ddev mit der bisherigen `.env`. `.env.example` zeigt die nötigen Schlüssel.
+
+Weil die Adresse Punkte enthält, löst das öffentliche DNS von `ddev.site` sie nicht auf. Der erste `ddev start` trägt sie deshalb in `/etc/hosts` ein und fragt dafür nach dem Admin-Passwort; aus einem Terminal starten, nicht aus einem Werkzeug ohne Eingabe.
+
+Der Teil zwischen `hilfe:start` und `hilfe:end` erscheint in der Anwendung unter «Hilfe» und unterstützt Überschriften, Absätze, Listen, **fett**, `Code` und Links.
+
+Weitere Unterlagen: [Datenbasis](docs/datenbasis.md), [Abweichungen](docs/abweichungen.md), [Entscheide](docs/adr/), [Einrichtung auf Cyon](docs/deploy-cyon.md).

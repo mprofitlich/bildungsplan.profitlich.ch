@@ -1,0 +1,65 @@
+name: Veröffentlichen
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Ein neuer Push bricht eine laufende Veröffentlichung nicht ab, sondern wartet.
+concurrency:
+  group: veroeffentlichen
+  cancel-in-progress: false
+
+jobs:
+  veroeffentlichen:
+    runs-on: ubuntu-latest
+    environment:
+      name: produktion
+      url: https://bildungsplan.profitlich.ch
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: composer install --no-interaction --no-progress
+      - run: npm ci
+      - run: npm test
+      - run: cp .env.example .env && php artisan key:generate && php artisan test --compact
+      - run: npm run build
+
+      # Auf dem Server laufen nur Abhängigkeiten ohne Entwicklungswerkzeuge.
+      - run: composer install --no-dev --no-interaction --no-progress --optimize-autoloader
+
+      - name: SSH-Zugang einrichten
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.CYON_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.CYON_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      # `.env` und `storage/` gehören dem Server. Vom Speicher kommt nur das Gerüst dazu, nichts wird überschrieben.
+      - name: Dateien übertragen
+        env:
+          ZIEL: ${{ secrets.CYON_USER }}@${{ secrets.CYON_HOST }}:${{ secrets.CYON_PFAD }}
+        run: |
+          rsync -az --delete \
+            --exclude=/.env --exclude=/storage/ --exclude=/.git/ --exclude=/.github/ --exclude=/.ddev/ \
+            --exclude=/node_modules/ --exclude=/tests/ --exclude=/src/ --exclude=/daten/ --exclude=/quellen/ \
+            --exclude=/public/hot \
+            ./ "$ZIEL/"
+          rsync -az --ignore-existing storage/ "$ZIEL/storage/"
+
+      - name: Datenbank und Zwischenspeicher
+        run: |
+          ssh ${{ secrets.CYON_USER }}@${{ secrets.CYON_HOST }} "cd ${{ secrets.CYON_PFAD }} && \
+            php artisan migrate --force && \
+            php artisan optimize"

@@ -1,11 +1,29 @@
+import { konto } from './konto.svelte.js';
+
 const SCHLUESSEL = 'bildungsplan.kurse';
+// Mit Login liegen die Kurse auf dem Server; der Browser merkt sich nur, welcher aktiv ist.
+const SCHLUESSEL_AKTIV = 'bildungsplan.aktiv';
 
 /**
+ * @typedef {object} Sperre
+ * @property {string} email Wer den Kurs gerade bearbeitet.
+ * @property {boolean} eigene Ob die Sperre der eingeloggten Person gehört.
+ * @property {string} bis
+ */
+
+/**
+ * Die Felder ab `version` kommen vom Server und fehlen ohne Login.
  * @typedef {object} Kurs
  * @property {string} id
  * @property {string} titel
  * @property {string} beschrieb
  * @property {string[]} ziele Ids der gewählten Leistungsziele.
+ * @property {number} [version] Stand auf dem Server; fehlt, solange der Kurs dort noch nicht angelegt ist.
+ * @property {string} [besitzer]
+ * @property {boolean} [istBesitzer]
+ * @property {boolean} [imCurriculum]
+ * @property {string[]} [freigaben]
+ * @property {Sperre | null} [sperre]
  */
 
 /** @returns {Kurs} */
@@ -29,13 +47,32 @@ function istGueltig(stand) {
   );
 }
 
-function laden() {
+/**
+ * Liefert die Kurse, die in diesem Browser gespeichert sind, oder `null`.
+ * @returns {{ kurse: Kurs[], aktiv: string } | null}
+ */
+export function lokalerStand() {
   try {
     const stand = JSON.parse(localStorage.getItem(SCHLUESSEL));
     if (istGueltig(stand)) return stand;
   } catch {
     // Unlesbarer Speicher wird wie ein leerer behandelt.
   }
+  return null;
+}
+
+/** Entfernt die Kurse aus dem Browser, nachdem der Server sie übernommen hat. */
+export function lokalenStandVergessen() {
+  try {
+    localStorage.removeItem(SCHLUESSEL);
+  } catch {
+    // Ohne Speicher gibt es nichts zu vergessen.
+  }
+}
+
+function laden() {
+  const stand = lokalerStand();
+  if (stand) return stand;
   const kurs = leererKurs();
   return { kurse: [kurs], aktiv: kurs.id };
 }
@@ -48,9 +85,39 @@ export const zustand = $state(laden());
 
 $effect.root(() => {
   $effect(() => {
-    localStorage.setItem(SCHLUESSEL, JSON.stringify(zustand));
+    try {
+      if (konto.ich) localStorage.setItem(SCHLUESSEL_AKTIV, zustand.aktiv);
+      else localStorage.setItem(SCHLUESSEL, JSON.stringify(zustand));
+    } catch {
+      // Ohne Speicher gelten die Kurse nur bis zum Neuladen.
+    }
   });
 });
+
+/**
+ * Ersetzt die Kurse durch den Stand vom Server. Aktiv bleibt der Kurs, den dieser Browser
+ * zuletzt bearbeitet hat; gibt es keinen, kommt ein leerer dazu.
+ * @param {Kurs[]} kurse
+ */
+export function uebernehmen(kurse) {
+  let aktiv = null;
+  try {
+    aktiv = localStorage.getItem(SCHLUESSEL_AKTIV);
+  } catch {
+    // Dann gilt der erste Kurs.
+  }
+  zustand.kurse = kurse.length > 0 ? kurse : [leererKurs()];
+  zustand.aktiv = zustand.kurse.some((kurs) => kurs.id === aktiv) ? aktiv : zustand.kurse[0].id;
+}
+
+/**
+ * Ob jemand anderes den Kurs gerade bearbeitet; er lässt sich dann nur ansehen.
+ * @param {Kurs} kurs
+ * @returns {boolean}
+ */
+export function nurLesen(kurs) {
+  return Boolean(kurs.sperre && !kurs.sperre.eigene);
+}
 
 /**
  * Liefert den gerade bearbeiteten Kurs.
@@ -75,20 +142,12 @@ export function enthaelt(zielId) {
  */
 export function zielUmschalten(zielId) {
   const kurs = aktiverKurs();
+  if (nurLesen(kurs)) return;
   if (kurs.ziele.includes(zielId)) {
     kurs.ziele = kurs.ziele.filter((id) => id !== zielId);
   } else {
     kurs.ziele.push(zielId);
   }
-}
-
-/**
- * Legt mehrere Leistungsziele in den aktiven Kurs; vorhandene bleiben einmal.
- * @param {string[]} zielIds
- */
-export function zieleHinzufuegen(zielIds) {
-  const kurs = aktiverKurs();
-  kurs.ziele = [...new Set([...kurs.ziele, ...zielIds])];
 }
 
 /** Legt einen leeren Kurs an und macht ihn zum aktiven. */
@@ -133,14 +192,23 @@ export function sicherungsname(zeit = new Date()) {
  * @returns {boolean} `false`, wenn die Datei keine gültige Sicherung ist.
  */
 export function sicherungEinlesen(text) {
-  let stand;
-  try {
-    stand = JSON.parse(text);
-  } catch {
-    return false;
-  }
-  if (!istGueltig(stand)) return false;
+  const stand = sicherungLesen(text);
+  if (!stand) return false;
   zustand.kurse = stand.kurse;
   zustand.aktiv = stand.aktiv;
   return true;
+}
+
+/**
+ * Liest eine Sicherungsdatei.
+ * @param {string} text Inhalt der Datei.
+ * @returns {{ kurse: Kurs[], aktiv: string } | null} `null`, wenn die Datei keine gültige Sicherung ist.
+ */
+export function sicherungLesen(text) {
+  try {
+    const stand = JSON.parse(text);
+    return istGueltig(stand) ? stand : null;
+  } catch {
+    return null;
+  }
 }

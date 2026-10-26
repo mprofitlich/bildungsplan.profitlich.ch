@@ -5,9 +5,10 @@
   /**
    * Die Übersicht der Handlungskompetenzen aus Kapitel 3.2 des Bildungsplans.
    * Mit `anzahl` zeigt sie, wie viele Ziele ein Kurs je Handlungskompetenz
-   * enthält; mit `onwahl` werden die Felder anklickbar.
+   * enthält; mit `onwahl` werden die Felder anklickbar. `bezug` nennt im
+   * Hinweis zur Zahl, worauf sie sich bezieht.
    */
-  let { anzahl = undefined, onwahl = undefined } = $props();
+  let { anzahl = undefined, onwahl = undefined, bezug = 'im Kurs' } = $props();
 
   function phasen(kompetenz) {
     return arbeitsphasen.filter((phase) => kompetenz.arbeitsphasen.includes(phase.id));
@@ -21,7 +22,7 @@
       <span class="marke" style:background={phase.farbe} title={phase.name}></span>
     {/each}
     {#if zahl > 0}
-      <span class="anzahl" title="{zahl} Leistungsziele im Kurs">{zahl}</span>
+      <span class="anzahl" title="{zahl} Leistungsziele {bezug}">{zahl}</span>
     {/if}
   </span>
   <span class="name">{wortlaut(kompetenz, fassung.id).titel}</span>

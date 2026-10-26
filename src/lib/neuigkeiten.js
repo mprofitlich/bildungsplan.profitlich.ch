@@ -12,6 +12,11 @@
  */
 export const neuigkeiten = [
   {
+    id: '2026-10-login',
+    titel: 'Einloggen, Freigeben, Curriculum',
+    text: 'Mit einer Schuladresse lässt sich einloggen (unter «Meine Kurse»). Die Kurse liegen dann auf dem Server, lassen sich an Kolleginnen und Kollegen freigeben und im neuen Reiter «Curriculum» zeigen.',
+  },
+  {
     id: '2026-10-glossar',
     titel: 'Glossar',
     text: 'Der neue Reiter «Glossar» erklärt die Fachbegriffe und die Begriffe der Berufsbildung.',

@@ -1,6 +1,7 @@
 <script>
   import { tick } from 'svelte';
   import Banane from './lib/ostereier/Banane.svelte';
+  import Curriculum from './lib/Curriculum.svelte';
   import Erklaerung from './lib/Erklaerung.svelte';
   import Glossar from './lib/Glossar.svelte';
   import Hilfe from './lib/Hilfe.svelte';
@@ -11,13 +12,15 @@
   import Pfeil from './lib/Pfeil.svelte';
   import Styleguide from './lib/ostereier/Styleguide.svelte';
   import Uebersicht from './lib/Uebersicht.svelte';
+  import { abgleich } from './lib/abgleich.svelte.js';
   import { quelle } from './lib/bildungsplan.js';
   import { hinweise, styleguide } from './lib/hinweise.svelte.js';
+  import { abmelden, konto } from './lib/konto.svelte.js';
   import { aktiverKurs } from './lib/kurse.svelte.js';
 
   const stand = new Intl.DateTimeFormat('de-CH', { dateStyle: 'long' }).format(new Date(quelle.stand));
 
-  /** @type {'kompetenzen' | 'uebersicht' | 'glossar' | 'meine-kurse' | 'kurs' | 'hilfe' | 'styleguide'} */
+  /** @type {'kompetenzen' | 'uebersicht' | 'glossar' | 'meine-kurse' | 'curriculum' | 'kurs' | 'hilfe' | 'styleguide'} */
   let ansicht = $state('kompetenzen');
   const kurs = $derived(aktiverKurs());
 
@@ -104,8 +107,18 @@
 
 <header>
   <div class="innen">
-    <h1>Bildungsplan Grafikerin/Grafiker EFZ</h1>
-    <p class="quelle">{quelle.titel}, vom {stand}</p>
+    <div>
+      <h1>Bildungsplan Grafikerin/Grafiker EFZ</h1>
+      <p class="quelle">{quelle.titel}, vom {stand}</p>
+    </div>
+    <p class="konto">
+      {#if konto.ich}
+        {konto.ich.email}
+        <button onclick={abmelden}>Abmelden</button>
+      {:else}
+        <button onclick={() => (ansicht = 'meine-kurse')}>Einloggen</button>
+      {/if}
+    </p>
   </div>
 </header>
 
@@ -137,6 +150,14 @@
       >
         Meine Kurse
       </button>
+      {#if konto.ich}
+        <button
+          aria-current={ansicht === 'curriculum' ? 'page' : undefined}
+          onclick={() => (ansicht = 'curriculum')}
+        >
+          Curriculum
+        </button>
+      {/if}
       <button
         bind:this={hilfeReiter}
         aria-current={ansicht === 'hilfe' ? 'page' : undefined}
@@ -181,6 +202,13 @@
   </div>
 </div>
 
+{#if abgleich.meldung}
+  <div class="meldung" role="status">
+    <p>{abgleich.meldung}</p>
+    <button onclick={() => (abgleich.meldung = '')}>Schliessen</button>
+  </div>
+{/if}
+
 <main>
   {#if ansicht === 'kompetenzen'}
     <Kompetenzen onglossar={zeigeGlossar} {anfangssuche} />
@@ -190,6 +218,8 @@
     <Glossar onsuche={sucheBegriff} />
   {:else if ansicht === 'meine-kurse'}
     <MeineKurse onoeffne={() => (ansicht = 'kurs')} />
+  {:else if ansicht === 'curriculum' && konto.ich}
+    <Curriculum />
   {:else if ansicht === 'hilfe'}
     <Hilfe />
   {:else if ansicht === 'styleguide'}
@@ -229,7 +259,58 @@
   }
 
   header .innen {
+    display: flex;
+    gap: var(--abstand);
+    align-items: start;
+    justify-content: space-between;
     padding-bottom: var(--abstand);
+  }
+
+  .konto {
+    display: flex;
+    flex: none;
+    gap: var(--abstand);
+    align-items: center;
+    margin: 0;
+    font-size: var(--schrift-klein);
+  }
+
+  .konto button {
+    padding: 0.15em var(--abstand-klein);
+    background: none;
+    border-color: var(--grundton-text);
+    color: var(--grundton-text);
+    font-size: inherit;
+  }
+
+  .konto button:hover {
+    background: color-mix(in srgb, var(--grundton-text) 18%, transparent);
+  }
+
+  @media (max-width: 40rem) {
+    header .innen {
+      flex-direction: column;
+    }
+  }
+
+  /* Klebt unter dem Menü, damit eine abgelehnte Änderung nicht unbemerkt bleibt. */
+  .meldung {
+    position: sticky;
+    top: var(--menue);
+    z-index: 3;
+    display: flex;
+    gap: var(--abstand);
+    align-items: center;
+    justify-content: space-between;
+    max-width: 90rem;
+    margin: var(--abstand) auto 0;
+    padding: var(--abstand-klein) var(--abstand);
+    background: var(--treffer);
+    color: var(--text);
+  }
+
+  .meldung p {
+    margin: 0;
   }
 
   .menue .innen {

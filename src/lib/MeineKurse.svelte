@@ -1,6 +1,9 @@
 <script>
+  import { sicherungHinzufuegen } from './abgleich.svelte.js';
+  import Einloggen from './Einloggen.svelte';
   import { fassung } from './fassung.svelte.js';
   import { lernorte, taxonomiestufen, wortlaut, ziel } from './bildungsplan.js';
+  import { konto } from './konto.svelte.js';
   import { kursAnlegen, sicherung, sicherungEinlesen, sicherungsname, zustand } from './kurse.svelte.js';
 
   /** `onoeffne` zeigt den aktiven Kurs, nachdem er gewählt oder angelegt wurde. */
@@ -50,6 +53,11 @@
     const datei = event.currentTarget.files[0];
     event.currentTarget.value = '';
     if (!datei) return;
+    // Mit Login ersetzt die Sicherung nichts: Sonst verschwänden auch Kurse, die andere mitbearbeiten.
+    if (konto.ich) {
+      meldung = await sicherungHinzufuegen(await datei.text());
+      return;
+    }
     if (!confirm('Alle Kurse durch den Inhalt der Sicherung ersetzen?')) return;
     meldung = sicherungEinlesen(await datei.text())
       ? 'Sicherung eingelesen.'
@@ -73,6 +81,13 @@
     <li class:aktiv={kurs.id === zustand.aktiv}>
       <div class="name">
         <button class="titel" onclick={() => oeffnen(kurs.id)}>{kurs.titel || 'Kurs ohne Titel'}</button>
+        {#if kurs.istBesitzer === false}
+          <p class="herkunft">von {kurs.besitzer}</p>
+        {:else if kurs.freigaben?.length > 0}
+          <p class="herkunft">
+            freigegeben an {kurs.freigaben.length} {kurs.freigaben.length === 1 ? 'Person' : 'Personen'}
+          </p>
+        {/if}
       </div>
       <p class="anzahl">
         {kurs.ziele.length} {kurs.ziele.length === 1 ? 'Leistungsziel' : 'Leistungsziele'}
@@ -91,8 +106,18 @@
   {/each}
 </ul>
 
+{#if !konto.ich}
+  <Einloggen />
+{/if}
+
 <h2>Sicherung</h2>
-<p class="leise">Die Kurse liegen nur in diesem Browser. Eine Sicherungsdatei schützt vor Verlust.</p>
+{#if konto.ich}
+  <p class="leise">
+    Die Kurse liegen auf dem Server. «Sicherung einlesen» fügt die Kurse einer Datei hinzu und ersetzt keine.
+  </p>
+{:else}
+  <p class="leise">Die Kurse liegen nur in diesem Browser. Eine Sicherungsdatei schützt vor Verlust.</p>
+{/if}
 <div class="sicherung">
   <button onclick={sichern}>Sicherung herunterladen</button>
   <label class="datei">
@@ -193,8 +218,13 @@
     font-weight: 600;
   }
 
-  .lernort {
+  .lernort,
+  .herkunft {
     color: var(--text-leise);
+  }
+
+  .herkunft {
+    font-size: var(--schrift-klein);
   }
 
   .neu {

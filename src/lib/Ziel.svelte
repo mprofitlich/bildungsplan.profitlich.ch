@@ -2,7 +2,7 @@
   import { fassung } from './fassung.svelte.js';
   import { gegenstueck, lernortName, wortlaut } from './bildungsplan.js';
   import { getroffen } from './hervorhebung.js';
-  import { enthaelt, zielUmschalten } from './kurse.svelte.js';
+  import { aktiverKurs, enthaelt, nurLesen, zielUmschalten } from './kurse.svelte.js';
   import Stufe from './Stufe.svelte';
   import Text from './Text.svelte';
 
@@ -12,6 +12,7 @@
   const ziel = $derived(wortlaut(offiziell, fassung.id));
   const anderes = $derived(gegenstueck(offiziell) && wortlaut(gegenstueck(offiziell), fassung.id));
   const imKurs = $derived(enthaelt(ziel.id));
+  const gesperrt = $derived(nurLesen(aktiverKurs()));
 </script>
 
 <li class:im-kurs={imKurs}>
@@ -36,7 +37,13 @@
       {/if}
     {/if}
   </div>
-  <button class="wahl" aria-pressed={imKurs} onclick={() => zielUmschalten(ziel.id)}>
+  <button
+    class="wahl"
+    aria-pressed={imKurs}
+    disabled={gesperrt}
+    title={gesperrt ? `${aktiverKurs().sperre.email} bearbeitet den Kurs gerade` : undefined}
+    onclick={() => zielUmschalten(ziel.id)}
+  >
     {imKurs ? 'Entfernen' : 'Hinzufügen'}
   </button>
 </li>

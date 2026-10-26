@@ -81,6 +81,7 @@ textarea {
 button,
 input[type='text'],
 input[type='search'],
+input[type='email'],
 select,
 textarea {
   padding: var(--abstand-klein) var(--abstand);
@@ -92,6 +93,7 @@ textarea {
 
 input[type='text'],
 input[type='search'],
+input[type='email'],
 select,
 textarea {
   width: 100%;
@@ -99,6 +101,23 @@ textarea {
 
 button {
   cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Gesperrte Felder sehen aus wie Text auf der Fläche, nicht wie ein Eingabefeld. */
+:is(input, textarea):read-only {
+  background: var(--flaeche);
+}
+
+/* Die Seite, die ein Login-Link öffnet, steht ohne die Anwendung. */
+.login-seite {
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: var(--abstand-gross) var(--abstand);
 }
 
 /*
