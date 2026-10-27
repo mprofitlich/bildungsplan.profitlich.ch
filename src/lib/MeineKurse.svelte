@@ -11,6 +11,10 @@
 
   let meldung = $state('');
 
+  // Ohne Login fehlt `istBesitzer`; dann sind alle Kurse eigene.
+  const eigene = $derived(zustand.kurse.filter((kurs) => kurs.istBesitzer !== false));
+  const geteilte = $derived(zustand.kurse.filter((kurs) => kurs.istBesitzer === false));
+
   /** Zählt die Ziele eines Kurses nach Lernort und Taxonomiestufe. */
   function verteilung(kurs) {
     const gewaehlt = kurs.ziele
@@ -65,18 +69,9 @@
   }
 </script>
 
-<div class="kopf">
-  <h2>Meine Kurse ({zustand.kurse.length})</h2>
-  <button class="neu" onclick={anlegen}>
-    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-      <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-    </svg>
-    Neuer Kurs
-  </button>
-</div>
-
+{#snippet liste(kurse)}
 <ul class="liste">
-  {#each zustand.kurse as kurs (kurs.id)}
+  {#each kurse as kurs (kurs.id)}
     {@const zahlen = verteilung(kurs)}
     <li class:aktiv={kurs.id === zustand.aktiv}>
       <div class="name">
@@ -105,6 +100,24 @@
     </li>
   {/each}
 </ul>
+{/snippet}
+
+<div class="kopf">
+  <h2>Meine Kurse ({eigene.length})</h2>
+  <button class="neu" onclick={anlegen}>
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+      <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+    </svg>
+    Neuer Kurs
+  </button>
+</div>
+
+{@render liste(eigene)}
+
+{#if geteilte.length > 0}
+  <h2>Mit mir geteilt ({geteilte.length})</h2>
+  {@render liste(geteilte)}
+{/if}
 
 {#if !konto.ich}
   <Einloggen />

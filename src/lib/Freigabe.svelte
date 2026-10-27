@@ -43,7 +43,7 @@
     <span class="leise">– alle Eingeloggten von {konto.ich.domain} sehen den Kurs unter «Curriculum».</span>
   </label>
 
-  <p class="leise">Wer den Kurs mitbearbeiten darf. Es geht eine Mail an die Adresse; der Kurs erscheint dort unter «Meine Kurse».</p>
+  <p class="leise">Wer den Kurs mitbearbeiten darf. Es geht eine Mail an die Adresse; der Kurs erscheint dort unter «Meine Kurse» bei «Mit mir geteilt».</p>
 
   {#if kurs.freigaben.length > 0}
     <ul>
