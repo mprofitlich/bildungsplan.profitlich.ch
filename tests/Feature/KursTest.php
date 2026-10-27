@@ -32,6 +32,17 @@ class KursTest extends TestCase
     }
 
     #[Test]
+    public function vergibt_fortlaufende_nummern(): void
+    {
+        $erster = Kurs::factory()->create();
+        $ich = User::factory()->create();
+
+        $this->actingAs($ich)->postJson('/api/kurse', $this->daten())
+            ->assertCreated()
+            ->assertJson(['nummer' => $erster->nummer + 1]);
+    }
+
+    #[Test]
     public function der_import_uebernimmt_lokale_kurse_ohne_duplikate(): void
     {
         $ich = User::factory()->create();

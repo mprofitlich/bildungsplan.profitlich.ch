@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Route;
 // Die Ansichten der Anwendung haben eigene Pfade; die Liste gehört zu src/lib/adresse.js.
 Route::get('/{ansicht?}', fn () => view('app'))
     ->where('ansicht', 'uebersicht|glossar|meine-kurse|curriculum|hilfe|styleguide');
-Route::get('/kurs/{id?}', fn () => view('app'))->whereUuid('id');
+// Kurse unter ihrer Nummer oder, nur im Browser, unter ihrer Id; der Slug dahinter ist Beiwerk.
+Route::get('/kurs/{kennung?}', fn () => view('app'))
+    ->where('kennung', '([0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(-[a-z0-9-]+)?');
 
 Route::get('/login/{token}', [LoginController::class, 'zeigen'])->name('login.zeigen');
 Route::post('/login/{token}', [LoginController::class, 'einloesen'])->middleware('throttle:20,10')->name('login.einloesen');

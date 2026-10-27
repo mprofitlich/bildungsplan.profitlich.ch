@@ -12,12 +12,13 @@ const SCHLUESSEL_AKTIV = 'bildungsplan.aktiv';
  */
 
 /**
- * Die Felder ab `version` kommen vom Server und fehlen ohne Login.
+ * Die Felder ab `nummer` kommen vom Server und fehlen ohne Login.
  * @typedef {object} Kurs
  * @property {string} id
  * @property {string} titel
  * @property {string} beschrieb
  * @property {string[]} ziele Ids der gewählten Leistungsziele.
+ * @property {number} [nummer] Kurze Kennung für die Adresse.
  * @property {number} [version] Stand auf dem Server; fehlt, solange der Kurs dort noch nicht angelegt ist.
  * @property {string} [besitzer]
  * @property {boolean} [istBesitzer]

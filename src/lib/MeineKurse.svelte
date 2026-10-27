@@ -1,5 +1,6 @@
 <script>
   import { sicherungHinzufuegen } from './abgleich.svelte.js';
+  import { folgen, pfad } from './adresse.js';
   import Einloggen from './Einloggen.svelte';
   import { fassung } from './fassung.svelte.js';
   import { lernorte, taxonomiestufen, wortlaut, ziel } from './bildungsplan.js';
@@ -75,7 +76,9 @@
     {@const zahlen = verteilung(kurs)}
     <li class:aktiv={kurs.id === zustand.aktiv}>
       <div class="name">
-        <button class="titel" onclick={() => oeffnen(kurs.id)}>{kurs.titel || 'Kurs ohne Titel'}</button>
+        <a class="titel" href={pfad('kurs', kurs)} onclick={(event) => folgen(event, () => oeffnen(kurs.id))}
+          >{kurs.titel || 'Kurs ohne Titel'}</a
+        >
         {#if kurs.istBesitzer === false}
           <p class="herkunft">von {kurs.besitzer}</p>
         {:else if kurs.freigaben?.length > 0}
@@ -187,7 +190,7 @@
     border-left-color: var(--akzent);
   }
 
-  /* Der Titel bleibt der einzige Knopf; seine Klickfläche deckt die ganze Zeile. */
+  /* Der Titel bleibt der einzige Link; seine Klickfläche deckt die ganze Zeile. */
   li {
     position: relative;
     transition: background-color 0.15s;
@@ -208,13 +211,10 @@
   }
 
   .titel {
-    padding: 0;
-    background: none;
-    border: 0;
     color: var(--text);
     font-size: 1.125rem;
     font-weight: 600;
-    text-align: left;
+    text-decoration: none;
   }
 
   p {

@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * Ein Kurs mit den Leistungszielen, die er abdeckt.
  *
  * @property string $id
+ * @property int $nummer
  * @property int $besitzer_id
  * @property string $titel
  * @property string $beschrieb
@@ -40,9 +41,21 @@ class Kurs extends Model
 
     protected $attributes = ['im_curriculum' => false, 'version' => 1];
 
+    /**
+     * Vergibt die nächste Nummer. Legen zwei Personen im selben Augenblick einen Kurs an, scheitert
+     * eine der beiden am eindeutigen Index; der Browser versucht es mit der nächsten Änderung erneut.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (Kurs $kurs) {
+            $kurs->nummer ??= (static::max('nummer') ?? 0) + 1;
+        });
+    }
+
     protected function casts(): array
     {
         return [
+            'nummer' => 'integer',
             'ziele' => 'array',
             'im_curriculum' => 'boolean',
             'version' => 'integer',

@@ -21,6 +21,7 @@ class KursResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'nummer' => $this->nummer,
             'titel' => $this->titel,
             'beschrieb' => $this->beschrieb,
             'ziele' => $this->ziele,

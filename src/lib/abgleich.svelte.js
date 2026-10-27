@@ -32,10 +32,13 @@ export function inhalt(kurs) {
  */
 export function aenderungen(kurse, gespeichert) {
   const vorhanden = new Set(kurse.map((kurs) => kurs.id));
+  // Den Inhalt jedes Kurses lesen, auch eines neuen: Nur was hier gelesen wird, löst den Effekt in
+  // `starten` wieder aus. Sonst blieben Änderungen an einem Kurs ungespeichert, der gerade angelegt wird.
+  const aktuell = new Map(kurse.map((kurs) => [kurs.id, inhalt(kurs)]));
   return {
     neu: kurse.filter((kurs) => !gespeichert.has(kurs.id)).map((kurs) => kurs.id),
     geaendert: kurse
-      .filter((kurs) => gespeichert.has(kurs.id) && gespeichert.get(kurs.id) !== inhalt(kurs))
+      .filter((kurs) => gespeichert.has(kurs.id) && gespeichert.get(kurs.id) !== aktuell.get(kurs.id))
       .map((kurs) => kurs.id),
     entfernt: [...gespeichert.keys()].filter((id) => !vorhanden.has(id)),
   };
@@ -57,6 +60,7 @@ function finden(id) {
 
 /** Übernimmt vom Server alles ausser dem Inhalt, der sich lokal inzwischen geändert haben kann. */
 function rahmenUebernehmen(kurs, daten) {
+  kurs.nummer = daten.nummer;
   kurs.version = daten.version;
   kurs.besitzer = daten.besitzer;
   kurs.istBesitzer = daten.istBesitzer;

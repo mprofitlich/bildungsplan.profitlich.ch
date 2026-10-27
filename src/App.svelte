@@ -13,7 +13,7 @@
   import Styleguide from './lib/ostereier/Styleguide.svelte';
   import Uebersicht from './lib/Uebersicht.svelte';
   import { abgleich } from './lib/abgleich.svelte.js';
-  import { ansichtAus, pfad } from './lib/adresse.js';
+  import { ansichtAus, folgen, kursZu, pfad } from './lib/adresse.js';
   import { quelle } from './lib/bildungsplan.js';
   import { hinweise, styleguide } from './lib/hinweise.svelte.js';
   import { abmelden, konto } from './lib/konto.svelte.js';
@@ -26,10 +26,11 @@
    * Was sich nicht zeigen lässt, ersetzt die Adresse, ohne einen Eintrag im Verlauf zu hinterlassen.
    */
   function ausAdresse() {
-    let { ansicht: ziel, kursId } = ansichtAus(location.pathname);
-    if (kursId && zustand.kurse.some((k) => k.id === kursId)) {
-      zustand.aktiv = kursId;
-    } else if (kursId) {
+    let { ansicht: ziel, kennung } = ansichtAus(location.pathname);
+    const gefunden = kennung && kursZu(zustand.kurse, kennung);
+    if (gefunden) {
+      zustand.aktiv = gefunden.id;
+    } else if (kennung) {
       abgleich.meldung = konto.ich
         ? 'Diesen Kurs gibt es nicht, oder er ist nicht für dich freigegeben.'
         : 'Dieser Kurs liegt nicht in diesem Browser. Eingeloggt sind freigegebene Kurse überall erreichbar.';
@@ -38,7 +39,7 @@
     if (ziel === 'curriculum' && !konto.ich) ziel = 'meine-kurse';
     // Das Ei bleibt nach dem Neuladen versteckt, auch für den, der die Adresse kennt.
     if (ziel === 'styleguide' && !styleguide.frei) ziel = 'kompetenzen';
-    history.replaceState(null, '', pfad(ziel, zustand.aktiv) + location.search + location.hash);
+    history.replaceState(null, '', pfad(ziel, aktiverKurs()) + location.search + location.hash);
     return ziel;
   }
 
@@ -47,18 +48,25 @@
   const kurs = $derived(aktiverKurs());
 
   $effect(() => {
-    const ziel = pfad(ansicht, zustand.aktiv);
+    const ziel = pfad(ansicht, kurs);
     if (ziel === location.pathname) return;
-    // Wechselt nur der Kurs, etwa nach dem Löschen, ersetzt das den Eintrag im Verlauf statt einen anzuhängen.
-    if (ansichtAus(location.pathname).ansicht === ansicht) history.replaceState(null, '', ziel);
-    else history.pushState(null, '', ziel);
+    // Wechseln nur Kurs, Titel oder Nummer, ersetzt das den Eintrag im Verlauf statt einen anzuhängen.
+    if (ansichtAus(location.pathname).ansicht !== ansicht) {
+      history.pushState(null, '', ziel);
+      return;
+    }
+    try {
+      history.replaceState(null, '', ziel);
+    } catch {
+      // Safari lässt nur rund hundert Aufrufe in zehn Sekunden zu; beim Tippen im Titel holt der nächste nach.
+    }
   });
 
   /** @type {HTMLElement} */
   let kopf = $state();
-  /** @type {HTMLButtonElement} */
+  /** @type {HTMLAnchorElement} */
   let hilfeReiter = $state();
-  /** @type {HTMLButtonElement} */
+  /** @type {HTMLAnchorElement} */
   let styleguideReiter = $state();
 
   // Klebende Elemente der Ansichten und Sprungziele halten diesen Abstand zum Menü.
@@ -157,62 +165,70 @@
 <div class="menue" bind:clientHeight={menueHoehe}>
   <div class="innen" bind:this={kopf}>
     <nav aria-label="Ansichten">
-      <button
+      <a
+        href={pfad('kompetenzen')}
         aria-current={ansicht === 'kompetenzen' ? 'page' : undefined}
-        onclick={zeigeKompetenzen}
+        onclick={(event) => folgen(event, zeigeKompetenzen)}
       >
         Kompetenzen
-      </button>
-      <button
+      </a>
+      <a
+        href={pfad('uebersicht')}
         aria-current={ansicht === 'uebersicht' ? 'page' : undefined}
-        onclick={() => (ansicht = 'uebersicht')}
+        onclick={(event) => folgen(event, () => (ansicht = 'uebersicht'))}
       >
         Übersicht
-      </button>
-      <button
+      </a>
+      <a
+        href={pfad('glossar')}
         aria-current={ansicht === 'glossar' ? 'page' : undefined}
-        onclick={() => (ansicht = 'glossar')}
+        onclick={(event) => folgen(event, () => (ansicht = 'glossar'))}
       >
         Glossar
-      </button>
-      <button
+      </a>
+      <a
+        href={pfad('meine-kurse')}
         aria-current={ansicht === 'meine-kurse' ? 'page' : undefined}
-        onclick={() => (ansicht = 'meine-kurse')}
+        onclick={(event) => folgen(event, () => (ansicht = 'meine-kurse'))}
       >
         Meine Kurse
-      </button>
+      </a>
       {#if konto.ich}
-        <button
+        <a
+          href={pfad('curriculum')}
           aria-current={ansicht === 'curriculum' ? 'page' : undefined}
-          onclick={() => (ansicht = 'curriculum')}
+          onclick={(event) => folgen(event, () => (ansicht = 'curriculum'))}
         >
           Curriculum
-        </button>
+        </a>
       {/if}
-      <button
+      <a
         bind:this={hilfeReiter}
+        href={pfad('hilfe')}
         aria-current={ansicht === 'hilfe' ? 'page' : undefined}
-        onclick={() => (ansicht = 'hilfe')}
+        onclick={(event) => folgen(event, () => (ansicht = 'hilfe'))}
       >
         Hilfe
-      </button>
+      </a>
       {#if styleguide.frei}
-        <button
+        <a
           bind:this={styleguideReiter}
+          href={pfad('styleguide')}
           aria-current={ansicht === 'styleguide' ? 'page' : undefined}
-          onclick={() => (ansicht = 'styleguide')}
+          onclick={(event) => folgen(event, () => (ansicht = 'styleguide'))}
         >
           Styleguide
-        </button>
+        </a>
       {/if}
-      <button
+      <a
         class="aktiver-kurs"
+        href={pfad('kurs', kurs)}
         aria-current={ansicht === 'kurs' ? 'page' : undefined}
-        onclick={() => (ansicht = 'kurs')}
+        onclick={(event) => folgen(event, () => (ansicht = 'kurs'))}
       >
         Kurs: {kurs.titel || 'ohne Titel'}
         <span class="zahl" title="{kurs.ziele.length} Leistungsziele">{kurs.ziele.length}</span>
-      </button>
+      </a>
     </nav>
     <!-- Die Reiter stehen nebeneinander; zwei Pfeile zugleich lägen übereinander, deshalb nacheinander. -->
     {#if hinweise.pfeil && hilfeReiter}
@@ -381,27 +397,25 @@
     scrollbar-width: none;
   }
 
-  nav button {
+  nav a {
     display: flex;
     flex: none;
     gap: var(--abstand-klein);
     align-items: center;
     padding: var(--abstand) 0;
     white-space: nowrap;
-    background: none;
-    border: 0;
     border-bottom: 3px solid transparent;
     color: var(--grundton-text);
     font-weight: 500;
+    text-decoration: none;
   }
 
   /* Weiss ist auf dem Violett schon an der Kontrastgrenze; der Hover zeigt sich deshalb am Unterstrich. */
-  nav button:hover {
+  nav a:hover {
     border-bottom-color: color-mix(in srgb, var(--grundton-text) 50%, transparent);
   }
 
-  nav button[aria-current='page'] {
-    background: none;
+  nav a[aria-current='page'] {
     border-bottom-color: var(--grundton-text);
     color: var(--grundton-text);
     font-weight: 600;

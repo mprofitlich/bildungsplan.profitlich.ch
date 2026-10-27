@@ -21,4 +21,18 @@ describe('aenderungen', () => {
     const gespeichert = new Map([['a', inhalt(kurs('a'))]]);
     expect(aenderungen([{ ...kurs('a'), version: 4, sperre: null }], gespeichert).geaendert).toEqual([]);
   });
+
+  // Der Effekt in `starten` hängt nur von dem ab, was hier gelesen wird.
+  it('liest auch den Inhalt eines Kurses, der noch nicht gespeichert ist', () => {
+    let gelesen = false;
+    const neu = {
+      ...kurs('a'),
+      get titel() {
+        gelesen = true;
+        return 'Typografie';
+      },
+    };
+    aenderungen([neu], new Map());
+    expect(gelesen).toBe(true);
+  });
 });
