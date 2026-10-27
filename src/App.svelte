@@ -13,16 +13,46 @@
   import Styleguide from './lib/ostereier/Styleguide.svelte';
   import Uebersicht from './lib/Uebersicht.svelte';
   import { abgleich } from './lib/abgleich.svelte.js';
+  import { ansichtAus, pfad } from './lib/adresse.js';
   import { quelle } from './lib/bildungsplan.js';
   import { hinweise, styleguide } from './lib/hinweise.svelte.js';
   import { abmelden, konto } from './lib/konto.svelte.js';
-  import { aktiverKurs } from './lib/kurse.svelte.js';
+  import { aktiverKurs, zustand } from './lib/kurse.svelte.js';
 
   const stand = new Intl.DateTimeFormat('de-CH', { dateStyle: 'long' }).format(new Date(quelle.stand));
 
+  /**
+   * Ansicht zur Adresse im Browser; macht einen Kurs in der Adresse zum aktiven.
+   * Was sich nicht zeigen lässt, ersetzt die Adresse, ohne einen Eintrag im Verlauf zu hinterlassen.
+   */
+  function ausAdresse() {
+    let { ansicht: ziel, kursId } = ansichtAus(location.pathname);
+    if (kursId && zustand.kurse.some((k) => k.id === kursId)) {
+      zustand.aktiv = kursId;
+    } else if (kursId) {
+      abgleich.meldung = konto.ich
+        ? 'Diesen Kurs gibt es nicht, oder er ist nicht für dich freigegeben.'
+        : 'Dieser Kurs liegt nicht in diesem Browser. Eingeloggt sind freigegebene Kurse überall erreichbar.';
+      ziel = 'meine-kurse';
+    }
+    if (ziel === 'curriculum' && !konto.ich) ziel = 'meine-kurse';
+    // Das Ei bleibt nach dem Neuladen versteckt, auch für den, der die Adresse kennt.
+    if (ziel === 'styleguide' && !styleguide.frei) ziel = 'kompetenzen';
+    history.replaceState(null, '', pfad(ziel, zustand.aktiv) + location.search + location.hash);
+    return ziel;
+  }
+
   /** @type {'kompetenzen' | 'uebersicht' | 'glossar' | 'meine-kurse' | 'curriculum' | 'kurs' | 'hilfe' | 'styleguide'} */
-  let ansicht = $state('kompetenzen');
+  let ansicht = $state(ausAdresse());
   const kurs = $derived(aktiverKurs());
+
+  $effect(() => {
+    const ziel = pfad(ansicht, zustand.aktiv);
+    if (ziel === location.pathname) return;
+    // Wechselt nur der Kurs, etwa nach dem Löschen, ersetzt das den Eintrag im Verlauf statt einen anzuhängen.
+    if (ansichtAus(location.pathname).ansicht === ansicht) history.replaceState(null, '', ziel);
+    else history.pushState(null, '', ziel);
+  });
 
   /** @type {HTMLElement} */
   let kopf = $state();
@@ -98,6 +128,7 @@
 </script>
 
 <svelte:window
+  onpopstate={() => (ansicht = ausAdresse())}
   onpointermove={aufwecken}
   onpointerdown={aufwecken}
   onkeydown={aufwecken}

@@ -7,7 +7,10 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\PersonenController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => view('app'));
+// Die Ansichten der Anwendung haben eigene Pfade; die Liste gehört zu src/lib/adresse.js.
+Route::get('/{ansicht?}', fn () => view('app'))
+    ->where('ansicht', 'uebersicht|glossar|meine-kurse|curriculum|hilfe|styleguide');
+Route::get('/kurs/{id?}', fn () => view('app'))->whereUuid('id');
 
 Route::get('/login/{token}', [LoginController::class, 'zeigen'])->name('login.zeigen');
 Route::post('/login/{token}', [LoginController::class, 'einloesen'])->middleware('throttle:20,10')->name('login.einloesen');
