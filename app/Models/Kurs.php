@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property int $besitzer_id
  * @property string $titel
  * @property string $beschrieb
+ * @property array<string, string>|null $kriterien
  * @property list<string> $ziele
  * @property bool $im_curriculum
  * @property int $version
@@ -28,7 +29,7 @@ use Illuminate\Support\Carbon;
  * @property-read User $besitzer
  * @property-read User|null $sperrer
  */
-#[Fillable(['id', 'titel', 'beschrieb', 'ziele'])]
+#[Fillable(['id', 'titel', 'beschrieb', 'kriterien', 'ziele'])]
 class Kurs extends Model
 {
     /** @use HasFactory<KursFactory> */
@@ -36,6 +37,9 @@ class Kurs extends Model
 
     /** So lange gilt eine Sperre ohne Erneuerung (ADR 0003). */
     public const SPERRE_SEKUNDEN = 120;
+
+    /** Schlüssel der Beurteilungskriterien; die Bezeichnungen stehen im Frontend (src/lib/kriterien.js). */
+    public const KRITERIEN = ['entwicklung', 'gestaltungskonzept', 'umsetzung', 'vermittlung'];
 
     protected $table = 'kurse';
 
@@ -56,6 +60,7 @@ class Kurs extends Model
     {
         return [
             'nummer' => 'integer',
+            'kriterien' => 'array',
             'ziele' => 'array',
             'im_curriculum' => 'boolean',
             'version' => 'integer',
@@ -118,11 +123,25 @@ class Kurs extends Model
         $this->gesperrt_bis = now()->addSeconds(self::SPERRE_SEKUNDEN);
     }
 
+    /**
+     * Alle Beurteilungskriterien mit Text, fehlende leer; unbekannte Schlüssel fallen weg.
+     *
+     * @param  array<string, string|null>|null  $kriterien
+     * @return array<string, string>
+     */
+    public static function kriterienVon(?array $kriterien): array
+    {
+        return collect(self::KRITERIEN)
+            ->mapWithKeys(fn (string $schluessel) => [$schluessel => (string) ($kriterien[$schluessel] ?? '')])
+            ->all();
+    }
+
     /** Ob ein Kurs nur den leeren Anfangsstand hat, den die Anwendung von sich aus anlegt. */
     public static function istLeer(array $daten): bool
     {
         return in_array(trim($daten['titel'] ?? ''), ['', 'Neuer Kurs'], true)
             && trim($daten['beschrieb'] ?? '') === ''
+            && trim(implode('', self::kriterienVon($daten['kriterien'] ?? null))) === ''
             && ($daten['ziele'] ?? []) === [];
     }
 }

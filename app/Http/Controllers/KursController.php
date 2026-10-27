@@ -21,6 +21,19 @@ class KursController extends Controller
         'ziele.*' => ['string', 'regex:/^[a-z0-9.-]{1,32}$/'],
     ];
 
+    /**
+     * Die Kriterien dürfen fehlen: Ein Browser mit dem Stand von vor ihrer Einführung speichert
+     * sonst nicht mehr, und beim Speichern ohne Kriterien bleiben die vorhandenen stehen.
+     */
+    private function regeln(): array
+    {
+        return [
+            ...self::REGELN,
+            'kriterien' => ['sometimes', 'nullable', 'array:'.implode(',', Kurs::KRITERIEN)],
+            'kriterien.*' => ['nullable', 'string', 'max:5000'],
+        ];
+    }
+
     public function index(Request $request): AnonymousResourceCollection
     {
         return KursResource::collection($this->liste($request));
@@ -35,7 +48,7 @@ class KursController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $daten = $request->validate(['id' => ['required', 'uuid', 'unique:kurse,id'], ...self::REGELN]);
+        $daten = $request->validate(['id' => ['required', 'uuid', 'unique:kurse,id'], ...$this->regeln()]);
         $kurs = $request->user()->kurse()->create($this->bereinigt($daten));
 
         return (new KursResource($kurs))->response()->setStatusCode(201);
@@ -50,7 +63,7 @@ class KursController extends Controller
         $request->validate([
             'kurse' => ['present', 'array', 'max:500'],
             'kurse.*.id' => ['required', 'uuid'],
-            ...collect(self::REGELN)->mapWithKeys(fn ($regel, $feld) => ["kurse.*.{$feld}" => $regel])->all(),
+            ...collect($this->regeln())->mapWithKeys(fn ($regel, $feld) => ["kurse.*.{$feld}" => $regel])->all(),
         ]);
         $ich = $request->user();
 
@@ -80,7 +93,7 @@ class KursController extends Controller
     public function update(Request $request, Kurs $kurs): KursResource|JsonResponse
     {
         Gate::authorize('bearbeiten', $kurs);
-        $daten = $request->validate(['version' => ['required', 'integer'], ...self::REGELN]);
+        $daten = $request->validate(['version' => ['required', 'integer'], ...$this->regeln()]);
         $ich = $request->user();
 
         return DB::transaction(function () use ($kurs, $daten, $ich) {
@@ -163,6 +176,7 @@ class KursController extends Controller
             ...(isset($daten['id']) ? ['id' => $daten['id']] : []),
             'titel' => $daten['titel'] ?? '',
             'beschrieb' => $daten['beschrieb'] ?? '',
+            ...(array_key_exists('kriterien', $daten) ? ['kriterien' => Kurs::kriterienVon($daten['kriterien'])] : []),
             'ziele' => array_values(array_unique($daten['ziele'])),
         ];
     }

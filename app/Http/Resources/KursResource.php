@@ -24,6 +24,7 @@ class KursResource extends JsonResource
             'nummer' => $this->nummer,
             'titel' => $this->titel,
             'beschrieb' => $this->beschrieb,
+            'kriterien' => Kurs::kriterienVon($this->kriterien),
             'ziele' => $this->ziele,
             'version' => $this->version,
             'imCurriculum' => $this->im_curriculum,

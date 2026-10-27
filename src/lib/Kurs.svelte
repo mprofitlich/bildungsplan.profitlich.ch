@@ -2,7 +2,9 @@
   import Freigabe from './Freigabe.svelte';
   import { konto } from './konto.svelte.js';
   import KursInhalt from './KursInhalt.svelte';
+  import { KRITERIEN } from './kriterien.js';
   import { aktiverKurs, kursLoeschen, nurLesen } from './kurse.svelte.js';
+  import { wachsend } from './wachsend.js';
 
   /** `ongeloescht` führt nach dem Löschen zurück zur Übersicht der Kurse. */
   let { ongeloescht } = $props();
@@ -12,23 +14,6 @@
   // Einen fremden Kurs löschen darf nur, wer ihn besitzt; ohne Login gehört jeder Kurs dem Browser.
   const eigener = $derived(!konto.ich || kurs.istBesitzer !== false);
 
-  /** @type {HTMLTextAreaElement} */
-  let beschrieb;
-  let fensterbreite = $state(0);
-
-  /*
-   * Der Beschrieb wächst mit dem Inhalt; `rows` bleibt die Mindesthöhe, weil
-   * «auto» zuerst darauf zurückfällt. Per Script statt `field-sizing: content`,
-   * das noch nicht alle Browser kennen. Die Fensterbreite zählt mit, weil sich
-   * mit ihr der Umbruch ändert.
-   */
-  $effect(() => {
-    kurs.beschrieb;
-    fensterbreite;
-    beschrieb.style.height = 'auto';
-    beschrieb.style.height = `${beschrieb.scrollHeight + beschrieb.offsetHeight - beschrieb.clientHeight}px`;
-  });
-
   function loeschen() {
     if (!confirm(`Kurs «${kurs.titel}» mit ${kurs.ziele.length} Leistungszielen löschen?`)) return;
     kursLoeschen();
@@ -36,7 +21,6 @@
   }
 </script>
 
-<svelte:window bind:innerWidth={fensterbreite} />
 
 {#if gesperrt}
   <p class="hinweis" role="status">
@@ -55,8 +39,30 @@
 
 <label class="feld">
   <span>Beschrieb</span>
-  <textarea class="beschrieb" rows="4" bind:this={beschrieb} bind:value={kurs.beschrieb} readonly={gesperrt}></textarea>
+  <textarea
+    class="wachsend"
+    rows="4"
+    bind:value={kurs.beschrieb}
+    readonly={gesperrt}
+    {@attach wachsend(() => kurs.beschrieb)}
+  ></textarea>
 </label>
+
+<h2>Beurteilungskriterien</h2>
+<div class="kriterien">
+  {#each KRITERIEN as kriterium (kriterium.id)}
+    <label class="kriterium">
+      <span>{kriterium.name}</span>
+      <textarea
+        class="wachsend"
+        rows="1"
+        bind:value={kurs.kriterien[kriterium.id]}
+        readonly={gesperrt}
+        {@attach wachsend(() => kurs.kriterien[kriterium.id])}
+      ></textarea>
+    </label>
+  {/each}
+</div>
 
 {#if konto.ich && eigener && kurs.version !== undefined}
   <Freigabe {kurs} />
@@ -74,9 +80,45 @@
   }
 
   /* Die Höhe folgt dem Inhalt; ein Ziehgriff und eine Bildlaufleiste wären dabei nur im Weg. */
-  .beschrieb {
+  .wachsend {
     overflow: hidden;
     resize: none;
+  }
+
+  /* Wie die Abschnitte im Inhalt des Kurses darunter. */
+  h2 {
+    margin: var(--abstand-gross) 0 var(--abstand);
+    font-size: 1.375rem;
+  }
+
+  /* Bezeichnung links, Text rechts, wie in der Beurteilungstabelle; schmal untereinander. */
+  .kriterien {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: var(--abstand) var(--abstand-gross);
+    align-items: baseline;
+  }
+
+  .kriterium {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-items: baseline;
+  }
+
+  .kriterium span {
+    font-weight: 600;
+  }
+
+  @media (max-width: 40rem) {
+    .kriterien {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--abstand);
+    }
+
+    .kriterium {
+      gap: var(--abstand-klein);
+    }
   }
 
   .hinweis {

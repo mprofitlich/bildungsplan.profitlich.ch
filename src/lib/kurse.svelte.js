@@ -1,4 +1,5 @@
 import { konto } from './konto.svelte.js';
+import { kriterienVon } from './kriterien.js';
 
 const SCHLUESSEL = 'bildungsplan.kurse';
 // Mit Login liegen die Kurse auf dem Server; der Browser merkt sich nur, welcher aktiv ist.
@@ -17,6 +18,7 @@ const SCHLUESSEL_AKTIV = 'bildungsplan.aktiv';
  * @property {string} id
  * @property {string} titel
  * @property {string} beschrieb
+ * @property {Record<string, string>} kriterien Text je Beurteilungskriterium (`kriterien.js`).
  * @property {string[]} ziele Ids der gewählten Leistungsziele.
  * @property {number} [nummer] Kurze Kennung für die Adresse.
  * @property {number} [version] Stand auf dem Server; fehlt, solange der Kurs dort noch nicht angelegt ist.
@@ -29,7 +31,12 @@ const SCHLUESSEL_AKTIV = 'bildungsplan.aktiv';
 
 /** @returns {Kurs} */
 function leererKurs() {
-  return { id: crypto.randomUUID(), titel: 'Neuer Kurs', beschrieb: '', ziele: [] };
+  return { id: crypto.randomUUID(), titel: 'Neuer Kurs', beschrieb: '', kriterien: kriterienVon(null), ziele: [] };
+}
+
+/** Ergänzt die Kriterien in einem Stand aus dem Browser oder einer Sicherung, die älter sein kann als sie. */
+function ergaenzt(stand) {
+  return { ...stand, kurse: stand.kurse.map((kurs) => ({ ...kurs, kriterien: kriterienVon(kurs.kriterien) })) };
 }
 
 /** Prüft, ob ein geladener Stand die erwartete Form hat. */
@@ -55,7 +62,7 @@ function istGueltig(stand) {
 export function lokalerStand() {
   try {
     const stand = JSON.parse(localStorage.getItem(SCHLUESSEL));
-    if (istGueltig(stand)) return stand;
+    if (istGueltig(stand)) return ergaenzt(stand);
   } catch {
     // Unlesbarer Speicher wird wie ein leerer behandelt.
   }
@@ -208,7 +215,7 @@ export function sicherungEinlesen(text) {
 export function sicherungLesen(text) {
   try {
     const stand = JSON.parse(text);
-    return istGueltig(stand) ? stand : null;
+    return istGueltig(stand) ? ergaenzt(stand) : null;
   } catch {
     return null;
   }

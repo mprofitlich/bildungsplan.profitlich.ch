@@ -90,6 +90,49 @@ class KursTest extends TestCase
     }
 
     #[Test]
+    public function speichert_die_beurteilungskriterien_und_ergaenzt_fehlende(): void
+    {
+        $kurs = Kurs::factory()->create();
+        $daten = ['titel' => 'Neu', 'beschrieb' => '', 'ziele' => [], 'version' => 1];
+
+        $this->actingAs($kurs->besitzer)
+            ->putJson("/api/kurse/{$kurs->id}", [...$daten, 'kriterien' => ['vermittlung' => 'Probebewerbung', 'umsetzung' => null]])
+            ->assertOk()
+            ->assertJson(['kriterien' => ['entwicklung' => '', 'gestaltungskonzept' => '', 'umsetzung' => '', 'vermittlung' => 'Probebewerbung']]);
+    }
+
+    #[Test]
+    public function behaelt_die_kriterien_wenn_ein_alter_stand_ohne_sie_speichert(): void
+    {
+        $kurs = Kurs::factory()->create(['kriterien' => ['vermittlung' => 'Probebewerbung']]);
+
+        $this->actingAs($kurs->besitzer)
+            ->putJson("/api/kurse/{$kurs->id}", ['titel' => 'Neu', 'beschrieb' => '', 'ziele' => [], 'version' => 1])
+            ->assertOk()
+            ->assertJsonPath('kriterien.vermittlung', 'Probebewerbung');
+    }
+
+    #[Test]
+    public function lehnt_unbekannte_kriterien_ab(): void
+    {
+        $ich = User::factory()->create();
+
+        $this->actingAs($ich)->postJson('/api/kurse', $this->daten(['kriterien' => ['erfunden' => 'x']]))
+            ->assertUnprocessable();
+    }
+
+    #[Test]
+    public function der_import_uebernimmt_einen_kurs_der_nur_kriterien_hat(): void
+    {
+        $ich = User::factory()->create();
+        $kurs = $this->daten(['titel' => 'Neuer Kurs', 'ziele' => [], 'kriterien' => ['entwicklung' => 'Skizzen']]);
+
+        $this->actingAs($ich)->postJson('/api/kurse/import', ['kurse' => [$kurs]])
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.kriterien.entwicklung', 'Skizzen');
+    }
+
+    #[Test]
     public function lehnt_eine_speicherung_auf_veraltetem_stand_ab(): void
     {
         $kurs = Kurs::factory()->create(['titel' => 'Aktuell']);

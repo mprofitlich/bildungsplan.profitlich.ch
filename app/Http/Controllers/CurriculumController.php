@@ -22,6 +22,7 @@ class CurriculumController extends Controller
                 'id' => $kurs->id,
                 'titel' => $kurs->titel,
                 'beschrieb' => $kurs->beschrieb,
+                'kriterien' => Kurs::kriterienVon($kurs->kriterien),
                 'ziele' => $kurs->ziele,
                 'besitzer' => $kurs->besitzer->email,
             ]);

@@ -1,3 +1,4 @@
+import { KRITERIEN } from './kriterien.js';
 import { anfrage, fehlermeldung } from './server.js';
 import { aktiverKurs, lokalenStandVergessen, lokalerStand, sicherungLesen, uebernehmen, zustand } from './kurse.svelte.js';
 
@@ -21,7 +22,14 @@ export const abgleich = $state({ meldung: '' });
  * @returns {string}
  */
 export function inhalt(kurs) {
-  return JSON.stringify([kurs.titel, kurs.beschrieb, kurs.ziele]);
+  // Die Kriterien in fester Reihenfolge, damit die Reihenfolge der Schlüssel nichts als Änderung zählt.
+  const kriterien = KRITERIEN.map(({ id }) => kurs.kriterien?.[id] ?? '');
+  return JSON.stringify([kurs.titel, kurs.beschrieb, kriterien, kurs.ziele]);
+}
+
+/** Der Teil eines Kurses, den Speichern und Einlesen an den Server schicken. */
+function fuerServer({ titel, beschrieb, kriterien, ziele }) {
+  return { titel, beschrieb, kriterien: { ...kriterien }, ziele: [...ziele] };
 }
 
 /**
@@ -76,6 +84,7 @@ function einsetzen(daten) {
   rahmenUebernehmen(kurs, daten);
   kurs.titel = daten.titel;
   kurs.beschrieb = daten.beschrieb;
+  kurs.kriterien = daten.kriterien;
   kurs.ziele = daten.ziele;
   gespeichert.set(kurs.id, inhalt(kurs));
 }
@@ -100,7 +109,7 @@ async function speichern(id) {
   if (!kurs || (kurs.version !== undefined && gespeichert.get(id) === inhalt(kurs))) return;
 
   const stand = inhalt(kurs);
-  const daten = { titel: kurs.titel, beschrieb: kurs.beschrieb, ziele: [...kurs.ziele] };
+  const daten = fuerServer(kurs);
   laufend.add(id);
   const antwort =
     kurs.version === undefined
@@ -184,7 +193,7 @@ export async function starten() {
   const lokal = lokalerStand();
   const antwort = lokal
     ? await anfrage('POST', '/kurse/import', {
-        kurse: lokal.kurse.map(({ id, titel, beschrieb, ziele }) => ({ id, titel, beschrieb, ziele })),
+        kurse: lokal.kurse.map((kurs) => ({ id: kurs.id, ...fuerServer(kurs) })),
       })
     : await anfrage('GET', '/kurse');
   if (antwort.status !== 200) {
@@ -276,7 +285,7 @@ export async function sicherungHinzufuegen(text) {
   const stand = sicherungLesen(text);
   if (!stand) return 'Die Datei ist keine gültige Sicherung.';
   const antwort = await anfrage('POST', '/kurse/import', {
-    kurse: stand.kurse.map(({ id, titel, beschrieb, ziele }) => ({ id, titel, beschrieb, ziele })),
+    kurse: stand.kurse.map((kurs) => ({ id: kurs.id, ...fuerServer(kurs) })),
   });
   if (antwort.status !== 200) return `Nicht eingelesen: ${fehlermeldung(antwort)}`;
   const neu = antwort.daten.filter((kurs) => !finden(kurs.id));

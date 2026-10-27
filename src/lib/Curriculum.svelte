@@ -1,5 +1,6 @@
 <script>
   import { summeJeKompetenz } from './curriculum.js';
+  import { KRITERIEN } from './kriterien.js';
   import KursInhalt from './KursInhalt.svelte';
   import { anfrage, fehlermeldung } from './server.js';
   import Uebersicht from './Uebersicht.svelte';
@@ -9,6 +10,7 @@
    * @property {string} id
    * @property {string} titel
    * @property {string} beschrieb
+   * @property {Record<string, string>} kriterien
    * @property {string[]} ziele
    * @property {string} besitzer
    */
@@ -45,6 +47,16 @@
   <p class="leise">Kurs von {offen.besitzer}, nur zum Ansehen.</p>
   {#if offen.beschrieb}
     <p class="beschrieb">{offen.beschrieb}</p>
+  {/if}
+  {@const kriterien = KRITERIEN.filter(({ id }) => offen.kriterien[id]?.trim())}
+  {#if kriterien.length > 0}
+    <h2>Beurteilungskriterien</h2>
+    <dl class="kriterien">
+      {#each kriterien as kriterium (kriterium.id)}
+        <dt>{kriterium.name}</dt>
+        <dd>{offen.kriterien[kriterium.id]}</dd>
+      {/each}
+    </dl>
   {/if}
   <KursInhalt kurs={offen} />
 {:else}
@@ -93,6 +105,33 @@
 
   .beschrieb {
     white-space: pre-line;
+  }
+
+  /* Bezeichnung links, Text rechts, wie im Formular des Kurses; schmal untereinander. */
+  .kriterien {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 62.75rem);
+    gap: var(--abstand-klein) var(--abstand-gross);
+    margin: var(--abstand) 0;
+  }
+
+  dt {
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+    white-space: pre-line;
+  }
+
+  @media (max-width: 40rem) {
+    .kriterien {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    dd {
+      margin-bottom: var(--abstand-klein);
+    }
   }
 
   .liste {

@@ -15,7 +15,7 @@ class CurriculumTest extends TestCase
     #[Test]
     public function zeigt_nur_freigegebene_kurse_der_eigenen_domain(): void
     {
-        $sichtbar = Kurs::factory()->create(['titel' => 'Sichtbar']);
+        $sichtbar = Kurs::factory()->create(['titel' => 'Sichtbar', 'kriterien' => ['vermittlung' => 'Probebewerbung']]);
         $sichtbar->forceFill(['im_curriculum' => true])->save();
         Kurs::factory()->create(['titel' => 'Privat']);
         $fremd = Kurs::factory()->for(User::factory()->domain('andere.ch'), 'besitzer')->create(['titel' => 'Fremd']);
@@ -25,6 +25,8 @@ class CurriculumTest extends TestCase
             ->assertJson(['domain' => 'sluz.ch'])
             ->assertJsonCount(1, 'kurse')
             ->assertJsonPath('kurse.0.titel', 'Sichtbar')
+            ->assertJsonPath('kurse.0.kriterien.vermittlung', 'Probebewerbung')
+            ->assertJsonPath('kurse.0.kriterien.entwicklung', '')
             ->assertJsonPath('kurse.0.besitzer', $sichtbar->besitzer->email);
     }
 }
