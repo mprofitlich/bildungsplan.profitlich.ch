@@ -36,7 +36,7 @@ An diesen Stellen übernimmt die Fassung «Graphic Design Workflow» den Wortlau
 
 ## 2. Unterschiede der Fassungen
 
-Diese 18 Stellen unterscheiden sich auch nach der Bereinigung. In der Datenbasis steht der Wert der Broschüre im Feld `broschuere`. Ist «Graphic Design Workflow» gewählt, nennt der Nachweis an jeder dieser Stellen den Wert von SGD/SGV in eckigen Klammern.
+Diese 18 Stellen unterscheiden sich auch nach der Bereinigung. In der Datenbasis steht der Wert der Broschüre im Feld `broschuere`.
 
 ### Nummern
 

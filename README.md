@@ -1,6 +1,6 @@
 # Bildungsplan Grafikerin/Grafiker EFZ
 
-Werkzeug zur Kursplanung: Leistungsziele aus dem Bildungsplan finden, zu Kursen zusammenstellen und als Nachweis kopieren.
+Werkzeug zur Kursplanung: Leistungsziele aus dem Bildungsplan finden und zu Kursen zusammenstellen.
 
 <!-- hilfe:start -->
 
@@ -12,7 +12,7 @@ Dieses Tool hilft dir, die zu deinem Kurs passenden Leistungsziele zusammenzuste
 
 Alle Handlungskompetenzen mit ihren Leistungszielen.
 
-- **Version**: Texte im Wortlaut des Graphic Design Workflow (Vorgabe) oder des Bildungsplans (SGD/SGV). Gilt für alle Ansichten und den Nachweis.
+- **Version**: Texte im Wortlaut des Graphic Design Workflow (Vorgabe) oder des Bildungsplans (SGD/SGV). Gilt für alle Ansichten.
 - **Suche**: Stichwort oder Nummer, etwa `Moodboard` oder `b1.1`. Mehrere Wörter müssen alle vorkommen. Durchsucht Titel, Beschreibungen und Ziele; Treffer sind gelb markiert. Beim Scrollen bleibt das Feld oben stehen.
 - **Ziele zeigen**: alle Ziele einer gefundenen Kompetenz oder nur die, in denen die Suche trifft.
 - **Filter**: Lernort, Taxonomiestufe, Handlungskompetenzbereich und Arbeitsphase. Mehrere Werte in einem Filter erweitern die Auswahl, mehrere Filter engen sie ein. «Filter zurücksetzen» hebt alle auf.
@@ -44,11 +44,11 @@ Begriffe aus dem Bildungsplan mit ihrer Erklärung.
 Der Reiter rechts zeigt den aktiven Kurs und die Zahl seiner Leistungsziele.
 
 - **Titel und Beschrieb**: werden laufend gespeichert.
+- **Beurteilungskriterien**: je ein Text zu Entwicklung/Entwurf, Gestaltungskonzept, Ausführung/Umsetzung und Vermittlung; leere Kriterien erscheinen im Curriculum nicht.
 - **Freigabe**: nur mit Login und nur bei eigenen Kursen. «Im Curriculum zeigen» macht den Kurs für alle Eingeloggten derselben Schule sichtbar. Darunter lässt er sich an Adressen derselben Schule zum Mitbearbeiten freigeben; bekannte Adressen werden vorgeschlagen, und die Person bekommt eine Mail.
 - **Gleichzeitig bearbeiten**: Wer einen Kurs gerade ändert, hält ihn; alle anderen sehen ihn so lange nur zum Lesen. Die Sperre löst sich, sobald die Person den Kurs wechselt, den Tab verlässt oder fünf Minuten nichts tut.
 - **Taxonomiestufen**: Verteilung der gewählten Ziele auf K1 bis K6.
 - **Im Bildungsplan**: welche Handlungskompetenzen der Kurs wie stark abdeckt.
-- **Nachweis**: die gewählten Ziele als Text zum Kopieren, in der eingestellten Version.
 - **Kurs löschen**: entfernt den Kurs nach einer Rückfrage. Freigegebene Kurse löschen kann nur, wem sie gehören.
 
 ## Curriculum
@@ -56,7 +56,7 @@ Der Reiter rechts zeigt den aktiven Kurs und die Zahl seiner Leistungsziele.
 Nur mit Login. Alle Kurse der eigenen Schule mit «Im Curriculum zeigen».
 
 - **Im Bildungsplan**: die Leistungsziele aller Kurse je Handlungskompetenz zusammengezählt; ein Ziel in drei Kursen zählt dreimal.
-- **Kurse**: Ein Klick öffnet den Kurs zum Ansehen, mit Nachweis zum Kopieren.
+- **Kurse**: Ein Klick öffnet den Kurs zum Ansehen.
 
 ## Neue Funktionen
 

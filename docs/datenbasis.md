@@ -9,7 +9,7 @@
 | `quellen/grafiker-in-efz_bildungsplan.pdf` | Stammquelle: offizieller Bildungsplan des SBFI vom 1. Januar 2023 (Berufsnummer 90306). Liefert Nummern, Wortlaut, Lernort, K-Stufen, Fachbegriffe und Glossar. |
 | `quellen/BiPla_Lernziele_230204.pdf` | Broschüre von Tobias Klauser und Felix Pfäffli zum [«Graphic Design Workflow»](https://graphicdesignworkflow.ch/). Liefert die Arbeitsphase je Handlungskompetenz und ihre Abweichungen vom Wortlaut. |
 
-Die Datenbasis folgt dem offiziellen Bildungsplan. Wo die Broschüre abweicht, steht ihr Wert zusätzlich im Feld `broschuere`. Was an beiden Quellen korrigiert ist und worin sie sich unterscheiden, steht in [abweichungen.md](abweichungen.md). Im Tool heissen die beiden Fassungen «SGD/SGV» und «Graphic Design Workflow». Die gewählte Fassung gilt für die Ansichten «Kompetenzen», «Übersicht», «Meine Kurse» und den Kurs samt Nachweis; in der Fassung der Broschüre nennt der Nachweis an jeder abweichenden Stelle den Wert des Bildungsplans in eckigen Klammern.
+Die Datenbasis folgt dem offiziellen Bildungsplan. Wo die Broschüre abweicht, steht ihr Wert zusätzlich im Feld `broschuere`. Was an beiden Quellen korrigiert ist und worin sie sich unterscheiden, steht in [abweichungen.md](abweichungen.md). Im Tool heissen die beiden Fassungen «SGD/SGV» und «Graphic Design Workflow». Die gewählte Fassung gilt für die Ansichten «Kompetenzen», «Übersicht», «Meine Kurse» und den Kurs.
 
 ## Umfang
 
