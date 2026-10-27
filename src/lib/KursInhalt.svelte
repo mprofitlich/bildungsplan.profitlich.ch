@@ -1,7 +1,7 @@
 <script>
   import { gruppiere, ziel } from './bildungsplan.js';
+  import ImBildungsplan from './ImBildungsplan.svelte';
   import KProfil from './KProfil.svelte';
-  import Uebersicht from './Uebersicht.svelte';
   import Zielgruppen from './Zielgruppen.svelte';
 
   /** Was ein Kurs abdeckt: Taxonomiestufen, Handlungskompetenzen und Ziele. */
@@ -21,8 +21,7 @@
   <h2>Taxonomiestufen</h2>
   <KProfil ziele={gewaehlt} />
 
-  <h2>Im Bildungsplan</h2>
-  <Uebersicht {anzahl} />
+  <ImBildungsplan {anzahl} />
 
   <h2>Leistungsziele ({gewaehlt.length})</h2>
   <Zielgruppen {gruppen} />

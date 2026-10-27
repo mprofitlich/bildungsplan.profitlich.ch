@@ -2,8 +2,8 @@
   import { summeJeKompetenz } from './curriculum.js';
   import { KRITERIEN } from './kriterien.js';
   import KursInhalt from './KursInhalt.svelte';
+  import ImBildungsplan from './ImBildungsplan.svelte';
   import { anfrage, fehlermeldung } from './server.js';
-  import Uebersicht from './Uebersicht.svelte';
 
   /**
    * @typedef {object} CurriculumKurs
@@ -66,8 +66,7 @@
     aller Kurse; ein Ziel in drei Kursen zählt dreimal.
   </p>
 
-  <h2>Im Bildungsplan</h2>
-  <Uebersicht anzahl={summe} bezug="in allen Kursen des Curriculums" />
+  <ImBildungsplan anzahl={summe} bezug="in allen Kursen des Curriculums" />
 
   <h2>Kurse ({curriculum.kurse.length})</h2>
   {#if curriculum.kurse.length === 0}

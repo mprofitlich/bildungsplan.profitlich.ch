@@ -48,7 +48,7 @@ Der Reiter rechts zeigt den aktiven Kurs und die Zahl seiner Leistungsziele.
 - **Freigabe**: nur mit Login und nur bei eigenen Kursen. «Im Curriculum zeigen» macht den Kurs für alle Eingeloggten derselben Schule sichtbar. Darunter lässt er sich an Adressen derselben Schule zum Mitbearbeiten freigeben; bekannte Adressen werden vorgeschlagen, und die Person bekommt eine Mail.
 - **Gleichzeitig bearbeiten**: Wer einen Kurs gerade ändert, hält ihn; alle anderen sehen ihn so lange nur zum Lesen. Die Sperre löst sich, sobald die Person den Kurs wechselt, den Tab verlässt oder fünf Minuten nichts tut.
 - **Taxonomiestufen**: Verteilung der gewählten Ziele auf K1 bis K6.
-- **Im Bildungsplan**: welche Handlungskompetenzen der Kurs wie stark abdeckt.
+- **Im Bildungsplan**: welche Handlungskompetenzen der Kurs wie stark abdeckt, als Matrix oder als Diagramm mit a1 bis g3 nebeneinander.
 - **Kurs löschen**: entfernt den Kurs nach einer Rückfrage. Freigegebene Kurse löschen kann nur, wem sie gehören.
 
 ## Curriculum
